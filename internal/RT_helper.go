@@ -238,45 +238,88 @@ func fNH_실시간_데이터_파일명() string {
 	return "realtime_data_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
 }
 
-func F실시간_데이터_수집_NH_ETF(종목코드_모음 []string) (db lib.I데이터베이스) {
-	var 에러 error
-
+func F실시간_데이터_수집_NH_ETF(종목코드_모음 []string) (db lib.I데이터베이스, 에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{
 		M에러: &에러,
 		M함수with패닉내역: func(r interface{}) {
 			lib.New에러with출력(r)
+			db = nil
 		}})
 
+	lib.F체크포인트()
+
 	ch수신 := make(chan lib.I소켓_메시지, 10000)
+
+	lib.F체크포인트()
 
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
+	lib.F체크포인트()
+
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_체결, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
+
+	lib.F체크포인트()
 
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
+	lib.F체크포인트()
+
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
+	lib.F체크포인트()
+
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
+
+	lib.F체크포인트()
 
 	ch초기화 := make(chan lib.T신호)
 	go go루틴_실시간_정보_중계(ch초기화)
 	신호 := <-ch초기화
 	lib.F조건부_패닉(신호 != lib.P신호_초기화, "예상하지 못한 신호. %v", 신호)
 
-	db, 에러 = lib.NewBoltDB(fNH_실시간_데이터_파일명())
-	lib.F에러2패닉(에러)
+	lib.F체크포인트()
+
+	ch결과물 := make(chan interface{}, 1)
+	ch타임아웃 := time.After(lib.P10초)
+	go f실시간_데이터_수집_NH_ETF_도우미(ch결과물)
+
+	select {
+	case 결과물 := <-ch결과물:
+		switch 결과값 := 결과물.(type) {
+		case error:
+			return nil, 결과값
+		case lib.I데이터베이스:
+			return 결과값, nil
+		}
+	case <-ch타임아웃:
+		lib.F패닉("타임아웃")
+	}
+
+	lib.F체크포인트()
 
 	go go루틴_실시간_데이터_저장(ch초기화, ch수신, db)
 	신호 = <-ch초기화
 	lib.F조건부_패닉(신호 != lib.P신호_초기화, "예상하지 못한 신호. %v", 신호)
 
+	lib.F체크포인트()
+
 	// go루틴 종료는 'lib.F공통_종료_채널_닫은_후_재설정()'으로 한다.
 
-	return db
+	return db, nil
+}
+
+func f실시간_데이터_수집_NH_ETF_도우미(ch결과물 chan interface{}) {
+	db, 에러 := lib.NewBoltDB(fNH_실시간_데이터_파일명())
+
+	switch {
+	case 에러 != nil:
+		ch결과물 <- 에러
+	default:
+		ch결과물 <- db
+	}
 }

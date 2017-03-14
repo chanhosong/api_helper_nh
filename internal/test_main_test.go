@@ -55,6 +55,8 @@ func f테스트_준비() {
 		if  F접속됨_NH() {
 			break
 		}
+
+		lib.F대기(lib.P1초)
 	}
 
 	lib.F조건부_패닉(!F접속됨_NH(), "접속 실패")

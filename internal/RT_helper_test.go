@@ -97,7 +97,6 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 	for {
 		select {
 		case 소켓_메시지 := <-ch실시간_데이터:
-			lib.F체크포인트("실시간 데이터 수신")
 			lib.F테스트_같음(t, 소켓_메시지.G자료형_문자열(0),
 				nh호가_잔량, nh시간외_호가잔량, nh예상_호가잔량, nh체결, nh_ETF_NAV, nh업종지수)
 
@@ -112,6 +111,14 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 }
 
 func TestGo루틴_실시간_데이터_저장(t *testing.T) {
+	var db lib.I데이터베이스
+
+	defer func() {
+		if db != nil {
+			db.S종료()
+			lib.F파일_삭제(fNH_실시간_데이터_파일명())
+		}}()
+
 	ch실시간_데이터 := make(chan lib.I소켓_메시지, 100)
 
 	종목_모음, 에러 := lib.F종목모음_코스피()
@@ -134,7 +141,7 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	db, 에러 := lib.NewBoltDB(fNH_실시간_데이터_파일명())
+	db, 에러 = lib.NewBoltDB(fNH_실시간_데이터_파일명())
 	lib.F에러2패닉(에러)
 
 	ch초기화 := make(chan lib.T신호)
@@ -177,11 +184,29 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 }
 
 func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
+	var db lib.I데이터베이스
+
+	defer func() {
+		if db != nil {
+			db.S종료()
+			lib.F파일_삭제(fNH_실시간_데이터_파일명())
+		}}()
+
+	lib.F체크포인트()
+
 	종목_모음, 에러 := lib.F종목모음_코스피()
 	lib.F테스트_에러없음(t, 에러)
 
+	lib.F체크포인트()
+
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
-	db := F실시간_데이터_수집_NH_ETF(종목코드_모음)
+
+	lib.F체크포인트()
+
+	db, 에러 = F실시간_데이터_수집_NH_ETF(종목코드_모음)
+	lib.F테스트_에러없음(t, 에러)
+
+	lib.F체크포인트()
 
 	var 테스트_수량 int
 	if lib.F한국증시_정규시장_거래시간임() {
@@ -190,10 +215,14 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 		테스트_수량 = 1
 	}
 
-	ch대기시간_초과 := time.After(lib.P10초)
+	lib.F체크포인트()
+
+	제한시간 := time.Now().Add(lib.P3분)
+
+	lib.F체크포인트()
 
 	for {
-		lib.F대기(lib.P1초)
+		lib.F체크포인트()
 
 		저장_수량 := db.G수량in버킷(버킷ID_호가_잔량) +
 			db.G수량in버킷(버킷ID_시간외_호가_잔량) +
@@ -202,14 +231,14 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 			db.G수량in버킷(버킷ID_ETF_NAV) +
 			db.G수량in버킷(버킷ID_업종지수)
 
-		if 저장_수량 >= 테스트_수량 {
-			return
-		}
-
-		select {
-		case <-ch대기시간_초과:
-			t.FailNow()
-		default:    // PASS
+		switch {
+		case 저장_수량 >= 테스트_수량:
+				lib.F문자열_출력("OK")
+				return
+		case time.Now().After(제한시간):
+				t.FailNow()
+		default:
+			lib.F대기(lib.P1초)
 		}
 	}
 }
