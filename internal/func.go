@@ -38,6 +38,7 @@ import (
 	ps "github.com/mitchellh/go-ps"
 	"strings"
 	"sync"
+	"time"
 )
 
 var _NH_API커넥터_경로 = lib.F_GOPATH() + `/src/github.com/ghts/api_bridge_nh/api_bridge_nh.exe`
@@ -99,3 +100,11 @@ func F접속됨_NH() (참거짓 bool) {
 	return 참거짓
 }
 
+func fNH_실시간_데이터_파일명() string {
+	if lib.F테스트_모드_실행_중() {
+		// 반복된 테스트로 인한 파일명 중복을 피하기 위함.
+		return "test_realtime_data_NH_" + time.Now().Format("20060102_150405") + ".dat"
+	}
+
+	return "realtime_data_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
+}

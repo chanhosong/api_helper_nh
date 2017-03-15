@@ -154,6 +154,11 @@ func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 
 		// DB에 수신값 저장
 		if 에러 := fNH_실시간_데이터_저장_도우미(수신_메시지, db); 에러 != nil {
 			lib.F에러_출력(에러)
+
+			if 에러.Error() == "database not open" {
+				lib.F패닉(에러)
+				return
+			}
 		}
 	}
 }
@@ -230,15 +235,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 	return 데이터베이스.S업데이트(질의)
 }
 
-func fNH_실시간_데이터_파일명() string {
-	if lib.F테스트_모드_실행_중() {
-		return "test_realtime_data_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
-	}
-
-	return "realtime_data_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
-}
-
-func F실시간_데이터_수집_NH_ETF(종목코드_모음 []string) (db lib.I데이터베이스, 에러 error) {
+func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []string) (db lib.I데이터베이스, 에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{
 		M에러: &에러,
 		M함수with패닉내역: func(r interface{}) {
@@ -286,7 +283,7 @@ func F실시간_데이터_수집_NH_ETF(종목코드_모음 []string) (db lib.I�
 
 	ch결과물 := make(chan interface{}, 1)
 	ch타임아웃 := time.After(lib.P10초)
-	go f실시간_데이터_수집_NH_ETF_도우미(ch결과물)
+	go f실시간_데이터_수집_NH_ETF_도우미(파일명, ch결과물)
 
 	select {
 	case 결과물 := <-ch결과물:
@@ -313,8 +310,8 @@ func F실시간_데이터_수집_NH_ETF(종목코드_모음 []string) (db lib.I�
 	return db, nil
 }
 
-func f실시간_데이터_수집_NH_ETF_도우미(ch결과물 chan interface{}) {
-	db, 에러 := lib.NewBoltDB(fNH_실시간_데이터_파일명())
+func f실시간_데이터_수집_NH_ETF_도우미(파일명 string, ch결과물 chan interface{}) {
+	db, 에러 := lib.NewBoltDB(파일명)
 
 	switch {
 	case 에러 != nil:

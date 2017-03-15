@@ -35,17 +35,12 @@ package internal
 
 import (
 	"github.com/ghts/lib"
-	"strings"
 	"testing"
 	"time"
 )
 
 // 여기에서 별도로 도우미 함수 기능을 테스트 하지 않고,
 // 도우미 함수의 테스트는 메인 함수의 기능 테스트로 대체.
-
-func TestF틱_데이터_파일명(t *testing.T) {
-	lib.F테스트_참임(t, strings.Contains(fNH_실시간_데이터_파일명(), time.Now().Format(lib.P일자_형식)))
-}
 
 func TestF자료형_문자열(t *testing.T) {
 	lib.F테스트_같음(t, nh호가_잔량, lib.F자료형_문자열(lib.NH호가_잔량{}))
@@ -112,11 +107,12 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 
 func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	var db lib.I데이터베이스
+	파일명 := fNH_실시간_데이터_파일명()
 
 	defer func() {
 		if db != nil {
 			db.S종료()
-			lib.F파일_삭제(fNH_실시간_데이터_파일명())
+			lib.F파일_삭제(파일명)
 		}}()
 
 	ch실시간_데이터 := make(chan lib.I소켓_메시지, 100)
@@ -141,7 +137,7 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	db, 에러 = lib.NewBoltDB(fNH_실시간_데이터_파일명())
+	db, 에러 = lib.NewBoltDB(파일명)
 	lib.F에러2패닉(에러)
 
 	ch초기화 := make(chan lib.T신호)
@@ -185,28 +181,20 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 
 func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 	var db lib.I데이터베이스
+	파일명 := fNH_실시간_데이터_파일명()
 
 	defer func() {
 		if db != nil {
 			db.S종료()
-			lib.F파일_삭제(fNH_실시간_데이터_파일명())
+			lib.F파일_삭제(파일명)
 		}}()
-
-	lib.F체크포인트()
 
 	종목_모음, 에러 := lib.F종목모음_코스피()
 	lib.F테스트_에러없음(t, 에러)
-
-	lib.F체크포인트()
-
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
 
-	lib.F체크포인트()
-
-	db, 에러 = F실시간_데이터_수집_NH_ETF(종목코드_모음)
+	db, 에러 = F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)
 	lib.F테스트_에러없음(t, 에러)
-
-	lib.F체크포인트()
 
 	var 테스트_수량 int
 	if lib.F한국증시_정규시장_거래시간임() {
@@ -215,15 +203,9 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 		테스트_수량 = 1
 	}
 
-	lib.F체크포인트()
-
 	제한시간 := time.Now().Add(lib.P3분)
 
-	lib.F체크포인트()
-
 	for {
-		lib.F체크포인트()
-
 		저장_수량 := db.G수량in버킷(버킷ID_호가_잔량) +
 			db.G수량in버킷(버킷ID_시간외_호가_잔량) +
 			db.G수량in버킷(버킷ID_예상_호가_잔량) +
