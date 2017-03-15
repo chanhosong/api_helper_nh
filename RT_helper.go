@@ -31,7 +31,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
-package internal
+package api_helper_nh
 
 import (
 	"github.com/ghts/lib"
@@ -112,19 +112,12 @@ func f실시간_정보_중계_도우미(ch수신 chan lib.I소켓_메시지, 소
 }
 
 var nh_ETF_실시간_데이터_수집 = lib.New안전한_bool(false)
-const nh호가_잔량 = "lib.NH호가_잔량"
-const nh시간외_호가잔량 = "lib.NH시간외_호가잔량"
-const nh예상_호가잔량 = "lib.NH예상_호가잔량"
-const nh체결 = "lib.NH체결"
-const nh_ETF_NAV = "lib.NH_ETF_NAV"
-const nh업종지수 = "lib.NH업종지수"
-
-var 버킷ID_호가_잔량 = []byte(nh호가_잔량)
-var 버킷ID_시간외_호가_잔량 = []byte(nh시간외_호가잔량)
-var 버킷ID_예상_호가_잔량 = []byte(nh예상_호가잔량)
-var 버킷ID_체결 = []byte(nh체결)
-var 버킷ID_ETF_NAV = []byte(nh_ETF_NAV)
-var 버킷ID_업종지수 = []byte(nh업종지수)
+var 버킷ID_호가_잔량 = []byte(P버킷ID_NH호가_잔량)
+var 버킷ID_시간외_호가_잔량 = []byte(P버킷ID_NH시간외_호가잔량)
+var 버킷ID_예상_호가_잔량 = []byte(P버킷ID_NH예상_호가잔량)
+var 버킷ID_체결 = []byte(P버킷ID_NH체결)
+var 버킷ID_ETF_NAV = []byte(P버킷ID_NH_ETF_NAV)
+var 버킷ID_업종지수 = []byte(P버킷ID_NH업종지수)
 
 func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 chan lib.I소켓_메시지, db lib.I데이터베이스) {
 	if 에러 := nh_ETF_실시간_데이터_수집.S값(true); 에러 != nil {
@@ -171,7 +164,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 	질의 := new(lib.S데이터베이스_질의)
 
 	switch 수신_메시지.G자료형_문자열(0) {
-	case nh호가_잔량:
+	case P버킷ID_NH호가_잔량:
 		s := new(lib.NH호가_잔량)
 		lib.F에러2패닉(수신_메시지.G값(0, s))
 
@@ -180,7 +173,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 
 		질의.M버킷ID = 버킷ID_호가_잔량
 		질의.M키 = append([]byte(s.M종목코드), 시각...)
-	case nh시간외_호가잔량:
+	case P버킷ID_NH시간외_호가잔량:
 		s := new(lib.NH시간외_호가잔량)
 		lib.F에러2패닉(수신_메시지.G값(0, s))
 
@@ -189,7 +182,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 
 		질의.M버킷ID = 버킷ID_시간외_호가_잔량
 		질의.M키 = append([]byte(s.M종목코드), 시각...)
-	case nh예상_호가잔량:
+	case P버킷ID_NH예상_호가잔량:
 		s := new(lib.NH예상_호가잔량)
 		lib.F에러2패닉(수신_메시지.G값(0, s))
 
@@ -198,7 +191,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 
 		질의.M버킷ID = 버킷ID_예상_호가_잔량
 		질의.M키 = append([]byte(s.M종목코드), 시각...)
-	case nh체결:
+	case P버킷ID_NH체결:
 		s := new(lib.NH체결)
 		lib.F에러2패닉(수신_메시지.G값(0, s))
 
@@ -207,7 +200,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 
 		질의.M버킷ID = 버킷ID_체결
 		질의.M키 = append([]byte(s.M종목코드), 시각...)
-	case nh_ETF_NAV:
+	case P버킷ID_NH_ETF_NAV:
 		s := new(lib.NH_ETF_NAV)
 		lib.F에러2패닉(수신_메시지.G값(0, s))
 
@@ -216,7 +209,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 
 		질의.M버킷ID = 버킷ID_ETF_NAV
 		질의.M키 = append([]byte(s.M종목코드), 시각...)
-	case nh업종지수:
+	case P버킷ID_NH업종지수:
 		s := new(lib.NH업종지수)
 		lib.F에러2패닉(수신_메시지.G값(0, s))
 
@@ -297,13 +290,9 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 		lib.F패닉("타임아웃")
 	}
 
-	lib.F체크포인트()
-
 	go go루틴_실시간_데이터_저장(ch초기화, ch수신, db)
 	신호 = <-ch초기화
 	lib.F조건부_패닉(신호 != lib.P신호_초기화, "예상하지 못한 신호. %v", 신호)
-
-	lib.F체크포인트()
 
 	// go루틴 종료는 'lib.F공통_종료_채널_닫은_후_재설정()'으로 한다.
 

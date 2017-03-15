@@ -31,44 +31,11 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
-package internal
+package api_helper_nh
 
-import (
-	"github.com/ghts/lib"
-	"os"
-	"testing"
-)
-
-func TestMain(m *testing.M) {
-	f테스트_준비()
-	테스트_실행결과 := m.Run()
-	f테스트_정리()
-
-	os.Exit(테스트_실행결과)
-}
-
-func f테스트_준비() {
-	lib.F테스트_모드_시작()
-	F_NH_API커넥터_실행()
-
-	for i:=0 ; i<10 ; i++ {
-		if  F접속됨_NH() {
-			break
-		}
-
-		lib.F대기(lib.P1초)
-	}
-
-	lib.F조건부_패닉(!F접속됨_NH(), "접속 실패")
-
-	var 에러 error
-	소켓SUB_NH실시간_정보, 에러 = lib.New소켓SUB(lib.P주소_NH_실시간_CBOR)
-	lib.F에러2패닉(에러)
-}
-
-func f테스트_정리() {
-	lib.New소켓_질의(lib.P주소_NH_TR, lib.CBOR, lib.P10초).S질의(lib.S질의값_단순TR{TR구분:lib.TR종료})
-	lib.F공통_종료_채널_닫은_후_재설정()
-	lib.F에러2패닉(소켓SUB_NH실시간_정보.Close())
-	lib.F테스트_모드_종료()
-}
+const P버킷ID_NH호가_잔량 = "lib.NH호가_잔량"
+const P버킷ID_NH시간외_호가잔량 = "lib.NH시간외_호가잔량"
+const P버킷ID_NH예상_호가잔량 = "lib.NH예상_호가잔량"
+const P버킷ID_NH체결 = "lib.NH체결"
+const P버킷ID_NH_ETF_NAV = "lib.NH_ETF_NAV"
+const P버킷ID_NH업종지수 = "lib.NH업종지수"

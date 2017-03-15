@@ -31,7 +31,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
-package internal
+package api_helper_nh
 
 import (
 	"github.com/ghts/lib"
@@ -43,12 +43,12 @@ import (
 // 도우미 함수의 테스트는 메인 함수의 기능 테스트로 대체.
 
 func TestF자료형_문자열(t *testing.T) {
-	lib.F테스트_같음(t, nh호가_잔량, lib.F자료형_문자열(lib.NH호가_잔량{}))
-	lib.F테스트_같음(t, nh시간외_호가잔량, lib.F자료형_문자열(lib.NH시간외_호가잔량{}))
-	lib.F테스트_같음(t, nh예상_호가잔량, lib.F자료형_문자열(lib.NH예상_호가잔량{}))
-	lib.F테스트_같음(t, nh체결, lib.F자료형_문자열(lib.NH체결{}))
-	lib.F테스트_같음(t, nh_ETF_NAV, lib.F자료형_문자열(lib.NH_ETF_NAV{}))
-	lib.F테스트_같음(t, nh업종지수, lib.F자료형_문자열(lib.NH업종지수{}))
+	lib.F테스트_같음(t, P버킷ID_NH호가_잔량, lib.F자료형_문자열(lib.NH호가_잔량{}))
+	lib.F테스트_같음(t, P버킷ID_NH시간외_호가잔량, lib.F자료형_문자열(lib.NH시간외_호가잔량{}))
+	lib.F테스트_같음(t, P버킷ID_NH예상_호가잔량, lib.F자료형_문자열(lib.NH예상_호가잔량{}))
+	lib.F테스트_같음(t, P버킷ID_NH체결, lib.F자료형_문자열(lib.NH체결{}))
+	lib.F테스트_같음(t, P버킷ID_NH_ETF_NAV, lib.F자료형_문자열(lib.NH_ETF_NAV{}))
+	lib.F테스트_같음(t, P버킷ID_NH업종지수, lib.F자료형_문자열(lib.NH업종지수{}))
 }
 
 func TestGo루틴_실시간_정보_중계(t *testing.T) {
@@ -93,7 +93,7 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 		select {
 		case 소켓_메시지 := <-ch실시간_데이터:
 			lib.F테스트_같음(t, 소켓_메시지.G자료형_문자열(0),
-				nh호가_잔량, nh시간외_호가잔량, nh예상_호가잔량, nh체결, nh_ETF_NAV, nh업종지수)
+				P버킷ID_NH호가_잔량, P버킷ID_NH시간외_호가잔량, P버킷ID_NH예상_호가잔량, P버킷ID_NH체결, P버킷ID_NH_ETF_NAV, P버킷ID_NH업종지수)
 
 			if 수신_수량++; 수신_수량 > 테스트_수량 {
 				return
@@ -107,7 +107,7 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 
 func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	var db lib.I데이터베이스
-	파일명 := fNH_실시간_데이터_파일명()
+	파일명 := f테스트용_실시간_데이터_파일명()
 
 	defer func() {
 		if db != nil {
@@ -181,7 +181,7 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 
 func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 	var db lib.I데이터베이스
-	파일명 := fNH_실시간_데이터_파일명()
+	파일명 := f테스트용_실시간_데이터_파일명()
 
 	defer func() {
 		if db != nil {
@@ -223,4 +223,13 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 			lib.F대기(lib.P1초)
 		}
 	}
+}
+
+func f테스트용_실시간_데이터_파일명() string {
+	if lib.F테스트_모드_실행_중() {
+		// 반복된 테스트로 인한 파일명 중복을 피하기 위함.
+		return "test_realtime_data_NH_" + time.Now().Format("20060102_150405") + ".dat"
+	}
+
+	return "realtime_data_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
 }

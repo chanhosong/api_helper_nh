@@ -31,7 +31,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
-package internal
+package api_helper_nh
 
 import (
 	"github.com/ghts/lib"
@@ -44,16 +44,20 @@ import (
 var _NH_API커넥터_경로 = lib.F_GOPATH() + `/src/github.com/ghts/api_bridge_nh/api_bridge_nh.exe`
 var _NH_API커넥터_실행_잠금 = new(sync.Mutex)
 
-func F_NH_API커넥터_실행() {
+func F_NH_API커넥터_실행() (에러 error) {
 	_NH_API커넥터_실행_잠금.Lock()
 	defer _NH_API커넥터_실행_잠금.Unlock()
 
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{ M에러: &에러 })
+
 	if fNH_API커넥터_실행_중() {
-		return
+		return nil
 	}
 
-	_, 에러 := lib.F외부_프로세스_실행(_NH_API커넥터_경로)
+	_, 에러 = lib.F외부_프로세스_실행(_NH_API커넥터_경로)
 	lib.F에러2패닉(에러)
+
+	return nil
 }
 
 func fNH_API커넥터_실행_중() (실행_중 bool) {
@@ -71,19 +75,27 @@ func fNH_API커넥터_실행_중() (실행_중 bool) {
 	return false
 }
 
-func F접속_NH() (로그인_정보 *lib.NH로그인_정보, 에러 error) {
-	defer lib.F에러패닉_처리(lib.S에러패닉_처리{
-		M에러: &에러,
-		M함수: func() { 로그인_정보 = nil }})
+func F접속_NH() (에러 error) {
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{ M에러: &에러 })
 
-	질의값 := new(lib.S질의값_단순TR)
-	질의값.TR구분 = lib.TR접속
+	lib.F에러2패닉(F_NH_API커넥터_실행())
 
-	응답 := lib.New소켓_질의(lib.P주소_NH_TR, lib.CBOR, lib.P30초).S질의(질의값).G응답()
-	lib.F에러2패닉(응답.G에러())
-	lib.F에러2패닉(응답.G값(0, &로그인_정보))
+	for i:=0 ; i<10 ; i++ {
+		if  F접속됨_NH() {
+			break
+		}
 
-	return
+		lib.F대기(lib.P1초)
+	}
+
+	lib.F조건부_패닉(!F접속됨_NH(), "접속 실패")
+
+	if 소켓SUB_NH실시간_정보 == nil {
+		소켓SUB_NH실시간_정보, 에러 = lib.New소켓SUB(lib.P주소_NH_실시간_CBOR)
+		lib.F에러2패닉(에러)
+	}
+
+	return nil
 }
 
 // 접속 되었는 지 확인.
@@ -100,11 +112,3 @@ func F접속됨_NH() (참거짓 bool) {
 	return 참거짓
 }
 
-func fNH_실시간_데이터_파일명() string {
-	if lib.F테스트_모드_실행_중() {
-		// 반복된 테스트로 인한 파일명 중복을 피하기 위함.
-		return "test_realtime_data_NH_" + time.Now().Format("20060102_150405") + ".dat"
-	}
-
-	return "realtime_data_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
-}
