@@ -34,9 +34,10 @@ along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 package main
 
 import (
-	"github.com/ghts/lib"
 	nh "github.com/ghts/api_helper_nh"
+	"github.com/ghts/lib"
 	"time"
+	"strings"
 )
 
 func main() {
@@ -48,8 +49,49 @@ func main() {
 
 	lib.F에러2패닉(nh.F접속_NH())
 
-	종목_모음 := lib.F샘플_종목_모음_코스피200_ETF()
-	종목코드_모음 := lib.F종목코드_추출(종목_모음, len(종목_모음))
+	종목_모음 := []*lib.S종목{
+		lib.New종목("069500", "KODEX 200", lib.P시장구분_ETF),
+		lib.New종목("114800", "KODEX 인버스", lib.P시장구분_ETF),
+		lib.New종목("122630", "KODEX 레버리지", lib.P시장구분_ETF),
+		lib.New종목("252670", "KODEX 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("069660", "KOSEF 200", lib.P시장구분_ETF),
+		lib.New종목("152280", "KOSEF 200선물", lib.P시장구분_ETF),
+		lib.New종목("253250", "KOSEF 200 선물레버리지", lib.P시장구분_ETF),
+		lib.New종목("253240", "KOSEF 200 선물인버스", lib.P시장구분_ETF),
+		lib.New종목("253230", "KOSEF 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("102110", "TIGER 200", lib.P시장구분_ETF),
+		lib.New종목("252710", "TIGER 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("105190", "KINDEX 200", lib.P시장구분_ETF),
+		lib.New종목("108590", "TREX 200", lib.P시장구분_ETF),
+		lib.New종목("148020", "KBSTAR 200", lib.P시장구분_ETF),
+		lib.New종목("252400", "KBSTAR 200 선물레버리지", lib.P시장구분_ETF),
+		lib.New종목("252410", "KBSTAR 200 선물인버스", lib.P시장구분_ETF),
+		lib.New종목("252420", "KBSTAR 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("152100", "ARIRANG 200", lib.P시장구분_ETF),
+		lib.New종목("253150", "ARIRANG 200 선물레버리지", lib.P시장구분_ETF),
+		lib.New종목("253160", "ARIRANG 200 선물인버스2X", lib.P시장구분_ETF)}
+
+	lib.F체크포인트()
+
+	// 종목 모음 내용 검사.
+	if len(lib.F중복_종목_제거(종목_모음)) != len(종목_모음) {
+		lib.F패닉("중복 종목이 존재합니다.")
+	}
+
+	lib.F체크포인트()
+
+	for _, 종목 := range 종목_모음 {
+		검색된_종목, 에러 := lib.F종목by코드(종목.G코드())
+		lib.F에러2패닉(에러)
+		lib.F조건부_패닉(strings.Replace(종목.G이름(), " ", "", -1) != strings.Replace(검색된_종목.G이름(), " ", "", -1),
+			"잘못된 종목 이름. %v %v", 종목.G이름(), 검색된_종목.G이름())
+		lib.F조건부_패닉(종목.G시장구분() != 검색된_종목.G시장구분(),
+			"잘못된 시장 구분. %v %v", 종목.G시장구분(), 검색된_종목.G시장구분())
+	}
+
+	lib.F체크포인트()
+
+	종목코드_모음 := lib.F2종목코드_모음(종목_모음)
 	파일명 := "RealTimeData_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
 
 	db, 에러 := nh.F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)

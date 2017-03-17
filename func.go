@@ -38,7 +38,6 @@ import (
 	ps "github.com/mitchellh/go-ps"
 	"strings"
 	"sync"
-	"time"
 )
 
 var _NH_API커넥터_경로 = lib.F_GOPATH() + `/src/github.com/ghts/api_bridge_nh/api_bridge_nh.exe`
