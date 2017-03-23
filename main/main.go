@@ -49,6 +49,8 @@ func main() {
 
 	lib.F에러2패닉(nh.F접속_NH())
 
+	lib.F문자열_출력("접속됨")
+
 	종목_모음 := []*lib.S종목{
 		lib.New종목("069500", "KODEX 200", lib.P시장구분_ETF),
 		lib.New종목("114800", "KODEX 인버스", lib.P시장구분_ETF),
@@ -71,14 +73,10 @@ func main() {
 		lib.New종목("253150", "ARIRANG 200 선물레버리지", lib.P시장구분_ETF),
 		lib.New종목("253160", "ARIRANG 200 선물인버스2X", lib.P시장구분_ETF)}
 
-	lib.F체크포인트()
-
 	// 종목 모음 내용 검사.
 	if len(lib.F중복_종목_제거(종목_모음)) != len(종목_모음) {
 		lib.F패닉("중복 종목이 존재합니다.")
 	}
-
-	lib.F체크포인트()
 
 	for _, 종목 := range 종목_모음 {
 		검색된_종목, 에러 := lib.F종목by코드(종목.G코드())
@@ -89,13 +87,15 @@ func main() {
 			"잘못된 시장 구분. %v %v", 종목.G시장구분(), 검색된_종목.G시장구분())
 	}
 
-	lib.F체크포인트()
+	lib.F문자열_출력("종목 %v개 설정 완료", len(종목_모음))
 
 	종목코드_모음 := lib.F2종목코드_모음(종목_모음)
 	파일명 := "RealTimeData_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
 
 	db, 에러 := nh.F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)
 	lib.F에러2패닉(에러)
+
+	lib.F문자열_출력("실시간 데이터 수집 시작")
 
 	// 1분마다 저장 수량 출력
 	버킷ID_호가_잔량 := []byte(nh.P버킷ID_NH호가_잔량)

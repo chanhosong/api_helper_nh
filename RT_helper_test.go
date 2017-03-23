@@ -112,7 +112,6 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	defer func() {
 		if db != nil {
 			db.S종료()
-			lib.F파일_삭제(파일명)
 		}}()
 
 	ch실시간_데이터 := make(chan lib.I소켓_메시지, 100)
@@ -186,15 +185,35 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 	defer func() {
 		if db != nil {
 			db.S종료()
-			lib.F파일_삭제(파일명)
 		}}()
 
-	종목_모음, 에러 := lib.F종목모음_코스피()
-	lib.F테스트_에러없음(t, 에러)
+	종목_모음 := []*lib.S종목{
+		lib.New종목("069500", "KODEX 200", lib.P시장구분_ETF),
+		lib.New종목("114800", "KODEX 인버스", lib.P시장구분_ETF),
+		lib.New종목("122630", "KODEX 레버리지", lib.P시장구분_ETF),
+		lib.New종목("252670", "KODEX 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("069660", "KOSEF 200", lib.P시장구분_ETF),
+		lib.New종목("152280", "KOSEF 200선물", lib.P시장구분_ETF),
+		lib.New종목("253250", "KOSEF 200 선물레버리지", lib.P시장구분_ETF),
+		lib.New종목("253240", "KOSEF 200 선물인버스", lib.P시장구분_ETF),
+		lib.New종목("253230", "KOSEF 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("102110", "TIGER 200", lib.P시장구분_ETF),
+		lib.New종목("252710", "TIGER 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("105190", "KINDEX 200", lib.P시장구분_ETF),
+		lib.New종목("108590", "TREX 200", lib.P시장구분_ETF),
+		lib.New종목("148020", "KBSTAR 200", lib.P시장구분_ETF),
+		lib.New종목("252400", "KBSTAR 200 선물레버리지", lib.P시장구분_ETF),
+		lib.New종목("252410", "KBSTAR 200 선물인버스", lib.P시장구분_ETF),
+		lib.New종목("252420", "KBSTAR 200 선물인버스2X", lib.P시장구분_ETF),
+		lib.New종목("152100", "ARIRANG 200", lib.P시장구분_ETF),
+		lib.New종목("253150", "ARIRANG 200 선물레버리지", lib.P시장구분_ETF),
+		lib.New종목("253160", "ARIRANG 200 선물인버스2X", lib.P시장구분_ETF)}
+
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
 
-	db, 에러 = F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)
+	db, 에러 := F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)
 	lib.F테스트_에러없음(t, 에러)
+	lib.F테스트_다름(t, db, nil)
 
 	var 테스트_수량 int
 	if lib.F한국증시_정규시장_거래시간임() {
@@ -206,6 +225,8 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 	제한시간 := time.Now().Add(lib.P3분)
 
 	for {
+		lib.F테스트_다름(t, db, nil)
+
 		저장_수량 := db.G수량in버킷(버킷ID_호가_잔량) +
 			db.G수량in버킷(버킷ID_시간외_호가_잔량) +
 			db.G수량in버킷(버킷ID_예상_호가_잔량) +

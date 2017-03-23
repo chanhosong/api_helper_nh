@@ -53,7 +53,8 @@ func F_NH_API커넥터_실행() (에러 error) {
 		return nil
 	}
 
-	_, 에러 = lib.F외부_프로세스_실행(_NH_API커넥터_경로)
+	pid, 에러 := lib.F외부_프로세스_실행(_NH_API커넥터_경로)
+	lib.F조건부_패닉(pid <= 0, "예상하지 못한 PID값. %v", pid)
 	lib.F에러2패닉(에러)
 
 	return nil
@@ -84,7 +85,7 @@ func F접속_NH() (에러 error) {
 			break
 		}
 
-		lib.F대기(lib.P1초)
+		lib.F대기(lib.P3초)
 	}
 
 	lib.F조건부_패닉(!F접속됨_NH(), "접속 실패")

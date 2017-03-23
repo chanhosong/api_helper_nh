@@ -136,6 +136,7 @@ func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 
 	for {
 		select {
 		case 수신_메시지 = <-ch수신:
+			lib.F체크포인트("데이터 수신")
 			if 수신_메시지.G에러() != nil {
 				lib.F에러_출력(수신_메시지.G에러())
 				continue
@@ -146,19 +147,24 @@ func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 
 
 		// DB에 수신값 저장
 		if 에러 := fNH_실시간_데이터_저장_도우미(수신_메시지, db); 에러 != nil {
-			lib.F에러_출력(에러)
+			lib.F체크포인트("데이터 저장 에러")
+			lib.F문자열_출력("에러 발생~!\n%s\n~!에러 끝", 에러.Error())
 
 			if 에러.Error() == "database not open" {
 				lib.F패닉(에러)
 				return
 			}
 		}
+
+		lib.F체크포인트("데이터 저장 성공")
 	}
 }
 
 func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메시지, 데이터베이스 lib.I데이터베이스) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
+	lib.F조건부_패닉(데이터베이스 == nil, "nil 데이터베이스")
+	lib.F조건부_패닉(수신_메시지 == nil, "nil 메시지")
 	lib.F조건부_패닉(수신_메시지.G길이() != 1, "예상하지 못한 메시지 길이. %v", 수신_메시지.G길이())
 
 	질의 := new(lib.S데이터베이스_질의)
@@ -225,7 +231,9 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 	질의.M값, 에러 = 수신_메시지.G바이트_모음(0)
 	lib.F에러2패닉(에러)
 
-	return 데이터베이스.S업데이트(질의)
+	에러 = 데이터베이스.S업데이트(질의)
+
+	return 에러
 }
 
 func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []string) (db lib.I데이터베이스, 에러 error) {
@@ -236,43 +244,27 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 			db = nil
 		}})
 
-	lib.F체크포인트()
-
 	ch수신 := make(chan lib.I소켓_메시지, 10000)
-
-	lib.F체크포인트()
 
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	lib.F체크포인트()
-
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_체결, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
-
-	lib.F체크포인트()
 
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	lib.F체크포인트()
-
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	lib.F체크포인트()
-
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
-
-	lib.F체크포인트()
 
 	ch초기화 := make(chan lib.T신호)
 	go go루틴_실시간_정보_중계(ch초기화)
 	신호 := <-ch초기화
 	lib.F조건부_패닉(신호 != lib.P신호_초기화, "예상하지 못한 신호. %v", 신호)
-
-	lib.F체크포인트()
 
 	ch결과물 := make(chan interface{}, 1)
 	ch타임아웃 := time.After(lib.P10초)
@@ -282,17 +274,28 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 	case 결과물 := <-ch결과물:
 		switch 결과값 := 결과물.(type) {
 		case error:
+			lib.F패닉(결과값)
 			return nil, 결과값
 		case lib.I데이터베이스:
-			return 결과값, nil
+			db = 결과값
+			break
+		default:
+			lib.F패닉("예상하지 못한 자료형")
+			return nil, nil
 		}
+
+		break
 	case <-ch타임아웃:
 		lib.F패닉("타임아웃")
 	}
 
 	go go루틴_실시간_데이터_저장(ch초기화, ch수신, db)
+
 	신호 = <-ch초기화
+
 	lib.F조건부_패닉(신호 != lib.P신호_초기화, "예상하지 못한 신호. %v", 신호)
+
+	lib.F체크포인트("데이터 저장 초기화 완료.")
 
 	// go루틴 종료는 'lib.F공통_종료_채널_닫은_후_재설정()'으로 한다.
 
