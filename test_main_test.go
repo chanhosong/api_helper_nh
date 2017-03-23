@@ -37,6 +37,8 @@ import (
 	"github.com/ghts/lib"
 	"os"
 	"testing"
+	"io/ioutil"
+	"strings"
 )
 
 func TestMain(m *testing.M) {
@@ -50,6 +52,18 @@ func TestMain(m *testing.M) {
 func f테스트_준비() {
 	lib.F테스트_모드_시작()
 	lib.F에러2패닉(F접속_NH())
+
+	파일_모음, 에러 := ioutil.ReadDir(".")
+	lib.F에러2패닉(에러)
+
+	for _, 파일 := range 파일_모음 {
+		switch {
+		case 파일.IsDir():
+			continue
+		case strings.HasPrefix(파일.Name(), "test_realtime_data_NH_"):
+			lib.F파일_삭제(파일.Name())
+		}
+	}
 }
 
 func f테스트_정리() {
