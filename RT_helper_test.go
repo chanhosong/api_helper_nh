@@ -59,20 +59,8 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 100)
 
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_체결, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
+	F실시간_데이터_구독_NH_ETF(ch실시간_데이터, 종목코드_모음)
+	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
 
 	ch초기화 := make(chan lib.T신호)
 	go go루틴_실시간_정보_중계(ch초기화)
@@ -106,6 +94,12 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 }
 
 func TestGo루틴_실시간_데이터_저장(t *testing.T) {
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M함수with패닉내역:
+	func(r interface{}) {
+		lib.F문자열_출력("%v", r)
+		t.FailNow()
+	}})
+
 	var db lib.I데이터베이스
 	파일명 := f테스트용_실시간_데이터_파일명()
 
@@ -114,29 +108,15 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 			db.S종료()
 		}}()
 
-	ch실시간_데이터 := make(chan lib.I소켓_메시지, 100)
+	ch수신 := make(chan lib.I소켓_메시지, 100)
 
-	종목_모음, 에러 := lib.F종목모음_코스피()
-	lib.F테스트_에러없음(t, 에러)
-
+	종목_모음 := lib.F샘플_종목_모음_코스피200_ETF()
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
 
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
+	F실시간_데이터_구독_NH_ETF(ch수신, 종목코드_모음)
+	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
 
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_체결, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch실시간_데이터, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
-	lib.F대기(lib.P500밀리초)
-
-	db, 에러 = lib.NewBoltDB(파일명)
+	db, 에러 := lib.NewBoltDB(파일명)
 	lib.F에러2패닉(에러)
 
 	ch초기화 := make(chan lib.T신호)
@@ -144,7 +124,7 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	go go루틴_실시간_정보_중계(ch초기화)
 	lib.F테스트_같음(t, <-ch초기화, lib.P신호_초기화)
 
-	go go루틴_실시간_데이터_저장(ch초기화, ch실시간_데이터, db)
+	go go루틴_실시간_데이터_저장(ch초기화, ch수신, db)
 	lib.F테스트_같음(t, <-ch초기화, lib.P신호_초기화)
 
 	ch대기시간_초과 := time.After(lib.P10초)
@@ -172,6 +152,7 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 
 		select {
 		case <-ch대기시간_초과:
+			lib.F문자열_출력("대기시간 초과")
 			t.FailNow()
 		default:    // PASS
 		}
@@ -187,33 +168,14 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 			db.S종료()
 		}}()
 
-	종목_모음 := []*lib.S종목{
-		lib.New종목("069500", "KODEX 200", lib.P시장구분_ETF),
-		lib.New종목("114800", "KODEX 인버스", lib.P시장구분_ETF),
-		lib.New종목("122630", "KODEX 레버리지", lib.P시장구분_ETF),
-		lib.New종목("252670", "KODEX 200 선물인버스2X", lib.P시장구분_ETF),
-		lib.New종목("069660", "KOSEF 200", lib.P시장구분_ETF),
-		lib.New종목("152280", "KOSEF 200선물", lib.P시장구분_ETF),
-		lib.New종목("253250", "KOSEF 200 선물레버리지", lib.P시장구분_ETF),
-		lib.New종목("253240", "KOSEF 200 선물인버스", lib.P시장구분_ETF),
-		lib.New종목("253230", "KOSEF 200 선물인버스2X", lib.P시장구분_ETF),
-		lib.New종목("102110", "TIGER 200", lib.P시장구분_ETF),
-		lib.New종목("252710", "TIGER 200 선물인버스2X", lib.P시장구분_ETF),
-		lib.New종목("105190", "KINDEX 200", lib.P시장구분_ETF),
-		lib.New종목("108590", "TREX 200", lib.P시장구분_ETF),
-		lib.New종목("148020", "KBSTAR 200", lib.P시장구분_ETF),
-		lib.New종목("252400", "KBSTAR 200 선물레버리지", lib.P시장구분_ETF),
-		lib.New종목("252410", "KBSTAR 200 선물인버스", lib.P시장구분_ETF),
-		lib.New종목("252420", "KBSTAR 200 선물인버스2X", lib.P시장구분_ETF),
-		lib.New종목("152100", "ARIRANG 200", lib.P시장구분_ETF),
-		lib.New종목("253150", "ARIRANG 200 선물레버리지", lib.P시장구분_ETF),
-		lib.New종목("253160", "ARIRANG 200 선물인버스2X", lib.P시장구분_ETF)}
-
+	종목_모음 := lib.F샘플_종목_모음_코스피200_ETF()
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
 
 	db, 에러 := F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)
 	lib.F테스트_에러없음(t, 에러)
 	lib.F테스트_다름(t, db, nil)
+
+	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
 
 	var 테스트_수량 int
 	if lib.F한국증시_정규시장_거래시간임() {
@@ -236,7 +198,6 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 
 		switch {
 		case 저장_수량 >= 테스트_수량:
-				lib.F문자열_출력("OK")
 				return
 		case time.Now().After(제한시간):
 				t.FailNow()

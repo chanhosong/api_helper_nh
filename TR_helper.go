@@ -66,7 +66,8 @@ func F실시간_정보_구독_NH(ch수신 chan lib.I소켓_메시지, RT코드 s
 	return 응답.G에러()
 }
 
-func F실시간_정보_해지_NH(ch수신 chan lib.I소켓_메시지, RT코드 string, 종목코드_모음 []string) (에러 error) {
+//func F실시간_정보_해지_NH(ch수신 chan lib.I소켓_메시지, RT코드 string, 종목코드_모음 []string) (에러 error) {
+func F실시간_정보_해지_NH(RT코드 string, 종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	질의값 := new(lib.S질의값_복수종목)
