@@ -148,8 +148,9 @@ func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 
 
 		// DB에 수신값 저장
 		if 에러 := fNH_실시간_데이터_저장_도우미(수신_메시지, db); 에러 != nil {
-			if 에러.Error() == bolt.ErrDatabaseNotOpen.Error() {
-				lib.F패닉(에러)
+			if 에러.Error() == bolt.ErrDatabaseNotOpen.Error() &&
+				lib.F테스트_모드_실행_중() {
+				// 테스트 과정에서 DB를 닫은 것이니 종료.
 				return
 			}
 

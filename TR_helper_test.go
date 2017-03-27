@@ -45,20 +45,14 @@ func TestF조회TR_NH(t *testing.T) {
 	질의값.TR코드 = lib.NH_TR_ETF_현재가_조회
 	질의값.M종목코드 = lib.F임의_종목_ETF().G코드()
 
-	lib.F체크포인트()
-
 	응답_메시지 := F조회_NH(질의값)
 	lib.F테스트_다름(t, 응답_메시지, nil)
 	lib.F테스트_에러없음(t, 응답_메시지.G에러())
 	lib.F테스트_같음(t, 응답_메시지.G길이(), 1)
 
-	lib.F체크포인트()
-
 	응답값 := lib.NewNH_ETF_현재가_조회_응답()
 	lib.F테스트_에러없음(t, 응답_메시지.G값(0, 응답값))
 	lib.F테스트_다름(t, 응답값, nil)
-
-	lib.F체크포인트(응답값)
 }
 
 func TestTR실시간_서비스_등록_및_해지(t *testing.T) {
