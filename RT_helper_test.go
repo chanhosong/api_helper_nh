@@ -103,11 +103,6 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	var db lib.I데이터베이스
 	파일명 := f테스트용_실시간_데이터_파일명()
 
-	defer func() {
-		if db != nil {
-			db.S종료()
-		}}()
-
 	ch수신 := make(chan lib.I소켓_메시지, 100)
 
 	종목_모음 := lib.F샘플_종목_모음_코스피200_ETF()
@@ -157,6 +152,8 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 		default:    // PASS
 		}
 	}
+
+	db.S종료()
 }
 
 func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
@@ -169,7 +166,7 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 		}}()
 
 	종목_모음 := lib.F샘플_종목_모음_코스피200_ETF()
-	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
+	종목코드_모음 := lib.F2종목코드_모음(종목_모음)
 
 	db, 에러 := F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)
 	lib.F테스트_에러없음(t, 에러)
@@ -187,8 +184,6 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 	제한시간 := time.Now().Add(lib.P3분)
 
 	for {
-		lib.F테스트_다름(t, db, nil)
-
 		저장_수량 := db.G수량in버킷(버킷ID_호가_잔량) +
 			db.G수량in버킷(버킷ID_시간외_호가_잔량) +
 			db.G수량in버킷(버킷ID_예상_호가_잔량) +
@@ -198,12 +193,18 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 
 		switch {
 		case 저장_수량 >= 테스트_수량:
-				return
+			db.S종료()
+			break
 		case time.Now().After(제한시간):
-				t.FailNow()
+			lib.F문자열_출력("타임아웃")
+			db.S종료()
+			t.FailNow()
 		default:
 			lib.F대기(lib.P1초)
+			continue
 		}
+
+		break
 	}
 }
 
