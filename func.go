@@ -38,6 +38,9 @@ import (
 	ps "github.com/mitchellh/go-ps"
 	"strings"
 	"sync"
+	"time"
+	"net"
+	"strconv"
 )
 
 var _NH_API커넥터_경로 = lib.F_GOPATH() + `/src/github.com/ghts/api_bridge_nh/api_bridge_nh.exe`
@@ -112,3 +115,55 @@ func F접속됨_NH() (참거짓 bool) {
 	return 참거짓
 }
 
+var 접속유지_실행중 = lib.New안전한_bool(false)
+
+func F접속유지() {
+	if 접속유지_실행중.G값() {
+		return
+	} else if 에러 := 접속유지_실행중.S값(true); 에러 != nil {
+		return
+	}
+
+	go f접속유지_도우미()
+}
+
+func f접속유지_도우미() {
+	defer 접속유지_실행중.S값(false)
+
+	ch종료 := lib.F공통_종료_채널()
+	정기점검 := time.NewTicker(lib.P10초)
+
+	for {
+		select {
+		case <-정기점검.C:
+			f핑(lib.F서버명_NH(), lib.F포트번호_NH())
+		case <-ch종료:
+			정기점검.Stop()
+			return
+		}
+	}
+}
+
+func f핑(호스트명 string, 포트 int) {
+	// https://gist.github.com/kenshinx/5796276 예제 코드 참고.
+
+	주소_모음, 에러 := net.LookupHost(호스트명)
+	lib.F에러2패닉(에러)
+	lib.F조건부_패닉(len(주소_모음) == 0, "주소를 찾을 수 없음. %s", 호스트명)
+
+	주소 := 주소_모음[0] + ":" + strconv.Itoa(포트)
+	연결, 에러 := net.Dial("tcp", 주소)
+	defer 연결.Close()
+
+	if 에러 != nil {
+		return
+	}
+
+	const 메시지 = "Ping"
+	const StopCharacter = "\r\n\r\n"
+
+	연결.Write([]byte(메시지))
+	연결.Write([]byte(StopCharacter))
+
+	연결.Read(make([]byte, 1024))
+}

@@ -254,7 +254,9 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 
 	ch결과물 := make(chan interface{}, 1)
 	ch타임아웃 := time.After(lib.P10초)
-	go f실시간_데이터_수집_NH_ETF_도우미(파일명, ch결과물)
+	ch공통종료 := lib.F공통_종료_채널()
+
+	go db생성_도우미(파일명, ch결과물)
 
 	select {
 	case 결과물 := <-ch결과물:
@@ -273,6 +275,8 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 		break
 	case <-ch타임아웃:
 		lib.F패닉("타임아웃")
+	case <-ch공통종료:
+		return
 	}
 
 	go go루틴_실시간_데이터_저장(ch초기화, ch수신, db)
@@ -288,7 +292,7 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 	return db, nil
 }
 
-func f실시간_데이터_수집_NH_ETF_도우미(파일명 string, ch결과물 chan interface{}) {
+func db생성_도우미(파일명 string, ch결과물 chan interface{}) {
 	db, 에러 := lib.NewBoltDB(파일명)
 
 	switch {

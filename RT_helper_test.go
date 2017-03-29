@@ -94,8 +94,7 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 }
 
 func TestGo루틴_실시간_데이터_저장(t *testing.T) {
-	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M함수with패닉내역:
-	func(r interface{}) {
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M함수with패닉내역: func(r interface{}) {
 		lib.F문자열_출력("%v", r)
 		t.FailNow()
 	}})
@@ -109,7 +108,6 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
 
 	F실시간_데이터_구독_NH_ETF(ch수신, 종목코드_모음)
-	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
 
 	db, 에러 := lib.NewBoltDB(파일명)
 	lib.F에러2패닉(에러)
@@ -153,6 +151,7 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 		}
 	}
 
+	F실시간_데이터_해지_NH_ETF(종목코드_모음)
 	db.S종료()
 }
 
