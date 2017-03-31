@@ -101,6 +101,28 @@ func F접속_NH() (에러 error) {
 	return nil
 }
 
+func F접속종료_NH() (에러 error) {
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{ M에러: &에러 })
+
+	if !F접속됨_NH() {
+		return nil
+	}
+
+	// 접속 해재 쿼리 실행
+	lib.F에러2패닉()
+
+	for i:=0 ; i<10 ; i++ {
+		if  !F접속됨_NH() {
+			return nil
+		}
+
+		lib.F대기(lib.P3초)
+	}
+
+
+	return lib.New에러("접속 종료 실패")
+}
+
 // 접속 되었는 지 확인.
 func F접속됨_NH() (참거짓 bool) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M함수: func() { 참거짓 = false }})
