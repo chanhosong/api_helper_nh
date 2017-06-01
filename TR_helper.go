@@ -51,7 +51,7 @@ func F실시간_정보_구독_NH(ch수신 chan lib.I소켓_메시지, RT코드 s
 
 	if !실시간_정보_중계_Go루틴_실행_중.G값() {
 		ch초기화 := make(chan lib.T신호, 1)
-		go go루틴_실시간_정보_중계(ch초기화)
+		go go루틴_실시간_정보_중계_BoltDB(ch초기화)
 		<-ch초기화
 	}
 
@@ -66,7 +66,6 @@ func F실시간_정보_구독_NH(ch수신 chan lib.I소켓_메시지, RT코드 s
 	return 응답.G에러()
 }
 
-//func F실시간_정보_해지_NH(ch수신 chan lib.I소켓_메시지, RT코드 string, 종목코드_모음 []string) (에러 error) {
 func F실시간_정보_해지_NH(RT코드 string, 종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
@@ -91,3 +90,44 @@ func F실시간_정보_일괄_해지_NH() (에러 error) {
 	return 응답.G에러()
 }
 
+func F실시간_데이터_구독_NH_ETF(ch수신 chan lib.I소켓_메시지, 종목코드_모음 []string) (에러 error) {
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
+
+	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_체결, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	return nil
+}
+
+func F실시간_데이터_해지_NH_ETF(종목코드_모음 []string) (에러 error) {
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
+
+	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_호가_잔량, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_체결, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
+	lib.F대기(lib.P500밀리초)
+
+	return nil
+}

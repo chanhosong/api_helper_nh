@@ -35,40 +35,48 @@ package api_helper_nh
 
 import (
 	"github.com/ghts/lib"
-	"os"
 	"testing"
-	"io/ioutil"
-	"strings"
+	"time"
 )
 
-func TestMain(m *testing.M) {
-	f테스트_준비()
-	테스트_실행결과 := m.Run()
-	f테스트_정리()
+func TestGo루틴_실시간_정보_중계(t *testing.T) {
+	ch실시간_데이터 := make(chan lib.I소켓_메시지, 100)
 
-	os.Exit(테스트_실행결과)
-}
+	종목_모음, 에러 := lib.F종목모음_코스피()
+	lib.F테스트_에러없음(t, 에러)
 
-func f테스트_준비() {
-	lib.F테스트_모드_시작()
-	lib.F에러2패닉(F접속_NH())
+	종목코드_모음 := lib.F종목코드_추출(종목_모음, 100)
 
-	파일_모음, 에러 := ioutil.ReadDir(".")
-	lib.F에러2패닉(에러)
+	F실시간_데이터_구독_NH_ETF(ch실시간_데이터, 종목코드_모음)
+	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
 
-	for _, 파일 := range 파일_모음 {
-		switch {
-		case 파일.IsDir():
-			continue
-		case strings.HasPrefix(파일.Name(), pBoltDB파일명_테스트):
-			lib.F파일_삭제(파일.Name())
+	ch초기화 := make(chan lib.T신호)
+	go go루틴_실시간_정보_중계_BoltDB(ch초기화)
+	lib.F테스트_같음(t, <-ch초기화, lib.P신호_초기화)
+
+	ch대기시간_초과 := time.After(lib.P30초)
+
+	var 테스트_수량 int
+	if lib.F한국증시_정규시장_거래시간임() {
+		테스트_수량 = 10
+	} else {
+		테스트_수량 = 1
+	}
+
+	수신_수량 := 0
+
+	for {
+		select {
+		case 소켓_메시지 := <-ch실시간_데이터:
+			lib.F테스트_같음(t, 소켓_메시지.G자료형_문자열(0),
+				P버킷ID_NH호가_잔량, P버킷ID_NH시간외_호가잔량, P버킷ID_NH예상_호가잔량, P버킷ID_NH체결, P버킷ID_NH_ETF_NAV, P버킷ID_NH업종지수)
+
+			if 수신_수량++; 수신_수량 > 테스트_수량 {
+				return
+			}
+		case <-ch대기시간_초과:
+			lib.F체크포인트("대기시간 초과")
+			t.FailNow()
 		}
 	}
-}
-
-func f테스트_정리() {
-	lib.New소켓_질의(lib.P주소_NH_TR, lib.CBOR, lib.P10초).S질의(lib.S질의값_단순TR{TR구분:lib.TR종료})
-	lib.F공통_종료_채널_닫은_후_재설정()
-	lib.F에러2패닉(소켓SUB_NH실시간_정보.Close())
-	lib.F테스트_모드_종료()
 }

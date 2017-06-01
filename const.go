@@ -33,9 +33,15 @@ along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
 package api_helper_nh
 
-const P버킷ID_NH호가_잔량 = "lib.NH호가_잔량"
-const P버킷ID_NH시간외_호가잔량 = "lib.NH시간외_호가잔량"
-const P버킷ID_NH예상_호가잔량 = "lib.NH예상_호가잔량"
-const P버킷ID_NH체결 = "lib.NH체결"
-const P버킷ID_NH_ETF_NAV = "lib.NH_ETF_NAV"
-const P버킷ID_NH업종지수 = "lib.NH업종지수"
+const (
+	P버킷ID_NH호가_잔량 = "lib.NH호가_잔량"
+	P버킷ID_NH시간외_호가잔량 = "lib.NH시간외_호가잔량"
+	P버킷ID_NH예상_호가잔량 = "lib.NH예상_호가잔량"
+	P버킷ID_NH체결 = "lib.NH체결"
+	P버킷ID_NH_ETF_NAV = "lib.NH_ETF_NAV"
+	P버킷ID_NH업종지수 = "lib.NH업종지수"
+
+	pBoltDB파일명 = "realtime_data_NH_"
+	pBoltDB파일명_테스트 = "test_" + pBoltDB파일명
+)
+

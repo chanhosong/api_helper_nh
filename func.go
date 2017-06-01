@@ -35,12 +35,12 @@ package api_helper_nh
 
 import (
 	"github.com/ghts/lib"
-	ps "github.com/mitchellh/go-ps"
+	"github.com/mitchellh/go-ps"
+	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"net"
-	"strconv"
 )
 
 var _NH_API커넥터_경로 = lib.F_GOPATH() + `/src/github.com/ghts/api_bridge_nh/api_bridge_nh.exe`
@@ -83,20 +83,31 @@ func F접속_NH() (에러 error) {
 
 	lib.F에러2패닉(F_NH_API커넥터_실행())
 
+	var 접속됨 bool
+
 	for i:=0 ; i<10 ; i++ {
-		if  F접속됨_NH() {
+		lib.F체크포인트(i)
+
+		if 접속됨, 에러 = F접속됨_NH(); 접속됨 {
 			break
 		}
 
 		lib.F대기(lib.P3초)
 	}
 
-	lib.F조건부_패닉(!F접속됨_NH(), "접속 실패")
+	lib.F체크포인트()
+
+	접속됨, 에러 = F접속됨_NH()
+	lib.F조건부_패닉(!접속됨, "접속 실패")
+
+	lib.F체크포인트()
 
 	if 소켓SUB_NH실시간_정보 == nil {
 		소켓SUB_NH실시간_정보, 에러 = lib.New소켓SUB(lib.P주소_NH_실시간_CBOR)
 		lib.F에러2패닉(에러)
 	}
+
+	lib.F체크포인트()
 
 	return nil
 }
@@ -104,28 +115,31 @@ func F접속_NH() (에러 error) {
 func F접속종료_NH() (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{ M에러: &에러 })
 
-	if !F접속됨_NH() {
+	var 접속됨 bool
+
+	if 접속됨, 에러 = F접속됨_NH(); !접속됨 {
 		return nil
 	}
 
 	// 접속 해재 쿼리 실행
-	lib.F에러2패닉()
+	lib.F에러2패닉(F접속_NH())
 
 	for i:=0 ; i<10 ; i++ {
-		if  !F접속됨_NH() {
+		if 접속됨, 에러 = F접속됨_NH(); !접속됨 {
 			return nil
 		}
 
 		lib.F대기(lib.P3초)
 	}
 
-
 	return lib.New에러("접속 종료 실패")
 }
 
 // 접속 되었는 지 확인.
-func F접속됨_NH() (참거짓 bool) {
-	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M함수: func() { 참거짓 = false }})
+func F접속됨_NH() (참거짓 bool, 에러 error) {
+	defer lib.F에러패닉_처리(lib.S에러패닉_처리{
+		M에러: &에러,
+		M함수: func() { 참거짓 = false }})
 
 	질의값 := new(lib.S질의값_단순TR)
 	질의값.TR구분 = lib.TR접속됨
@@ -134,7 +148,7 @@ func F접속됨_NH() (참거짓 bool) {
 	lib.F에러2패닉(응답.G에러())
 	lib.F에러2패닉(응답.G값(0, &참거짓))
 
-	return 참거짓
+	return 참거짓, nil
 }
 
 var 접속유지_실행중 = lib.New안전한_bool(false)

@@ -51,55 +51,13 @@ func TestF자료형_문자열(t *testing.T) {
 	lib.F테스트_같음(t, P버킷ID_NH업종지수, lib.F자료형_문자열(lib.NH업종지수{}))
 }
 
-func TestGo루틴_실시간_정보_중계(t *testing.T) {
-	ch실시간_데이터 := make(chan lib.I소켓_메시지, 100)
-
-	종목_모음, 에러 := lib.F종목모음_코스피()
-	lib.F테스트_에러없음(t, 에러)
-
-	종목코드_모음 := lib.F종목코드_추출(종목_모음, 100)
-
-	F실시간_데이터_구독_NH_ETF(ch실시간_데이터, 종목코드_모음)
-	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
-
-	ch초기화 := make(chan lib.T신호)
-	go go루틴_실시간_정보_중계(ch초기화)
-	lib.F테스트_같음(t, <-ch초기화, lib.P신호_초기화)
-
-	ch대기시간_초과 := time.After(lib.P30초)
-
-	var 테스트_수량 int
-	if lib.F한국증시_정규시장_거래시간임() {
-		테스트_수량 = 10
-	} else {
-		테스트_수량 = 1
-	}
-
-	수신_수량 := 0
-
-	for {
-		select {
-		case 소켓_메시지 := <-ch실시간_데이터:
-			lib.F테스트_같음(t, 소켓_메시지.G자료형_문자열(0),
-				P버킷ID_NH호가_잔량, P버킷ID_NH시간외_호가잔량, P버킷ID_NH예상_호가잔량, P버킷ID_NH체결, P버킷ID_NH_ETF_NAV, P버킷ID_NH업종지수)
-
-			if 수신_수량++; 수신_수량 > 테스트_수량 {
-				return
-			}
-		case <-ch대기시간_초과:
-			lib.F체크포인트("대기시간 초과")
-			t.FailNow()
-		}
-	}
-}
-
-func TestGo루틴_실시간_데이터_저장(t *testing.T) {
+func TestGo루틴_실시간_데이터_저장_BoltDB(t *testing.T) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M함수with패닉내역: func(r interface{}) {
 		lib.F문자열_출력("%v", r)
 		t.FailNow()
 	}})
 
-	var db lib.I데이터베이스
+	var db lib.I데이터베이스_Bolt
 	파일명 := f테스트용_실시간_데이터_파일명()
 
 	ch수신 := make(chan lib.I소켓_메시지, 100)
@@ -108,16 +66,17 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 20)
 
 	F실시간_데이터_구독_NH_ETF(ch수신, 종목코드_모음)
+	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
 
 	db, 에러 := lib.NewBoltDB(파일명)
 	lib.F에러2패닉(에러)
 
 	ch초기화 := make(chan lib.T신호)
 
-	go go루틴_실시간_정보_중계(ch초기화)
+	go go루틴_실시간_정보_중계_BoltDB(ch초기화)
 	lib.F테스트_같음(t, <-ch초기화, lib.P신호_초기화)
 
-	go go루틴_실시간_데이터_저장(ch초기화, ch수신, db)
+	go go루틴_실시간_데이터_저장_BoltDB(ch초기화, ch수신, db)
 	lib.F테스트_같음(t, <-ch초기화, lib.P신호_초기화)
 
 	ch대기시간_초과 := time.After(lib.P10초)
@@ -151,12 +110,12 @@ func TestGo루틴_실시간_데이터_저장(t *testing.T) {
 		}
 	}
 
-	F실시간_데이터_해지_NH_ETF(종목코드_모음)
 	db.S종료()
 }
 
-func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
-	var db lib.I데이터베이스
+/*
+func TestF실시간_데이터_수집_NH_ETF_BoltDB(t *testing.T) {
+	var db lib.I데이터베이스_Bolt
 	파일명 := f테스트용_실시간_데이터_파일명()
 
 	defer func() {
@@ -167,7 +126,7 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 	종목_모음 := lib.F샘플_종목_모음_코스피200_ETF()
 	종목코드_모음 := lib.F2종목코드_모음(종목_모음)
 
-	db, 에러 := F실시간_데이터_수집_NH_ETF(파일명, 종목코드_모음)
+	db, 에러 := F실시간_데이터_수집_NH_ETF_BoltDB(파일명, 종목코드_모음)
 	lib.F테스트_에러없음(t, 에러)
 	lib.F테스트_다름(t, db, nil)
 
@@ -206,12 +165,13 @@ func TestF실시간_데이터_수집_NH_ETF(t *testing.T) {
 		break
 	}
 }
+*/
 
 func f테스트용_실시간_데이터_파일명() string {
 	if lib.F테스트_모드_실행_중() {
 		// 반복된 테스트로 인한 파일명 중복을 피하기 위함.
-		return "test_realtime_data_NH_" + time.Now().Format("20060102_150405") + ".dat"
+		return pBoltDB파일명_테스트 + time.Now().Format("20060102_150405") + ".dat"
 	}
 
-	return "realtime_data_NH_" + time.Now().Format(lib.P일자_형식) + ".dat"
+	return pBoltDB파일명 + time.Now().Format(lib.P일자_형식) + ".dat"
 }

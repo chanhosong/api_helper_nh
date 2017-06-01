@@ -1,11 +1,8 @@
 /* Copyright (C) 2015-2016 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
-
 이 파일은 GHTS의 일부입니다.
-
 이 프로그램은 자유 소프트웨어입니다.
 소프트웨어의 피양도자는 자유 소프트웨어 재단이 공표한 GNU LGPL 2.1판
 규정에 따라 프로그램을 개작하거나 재배포할 수 있습니다.
-
 이 프로그램은 유용하게 사용될 수 있으리라는 희망에서 배포되고 있지만,
 특정한 목적에 적합하다거나, 이익을 안겨줄 수 있다는 묵시적인 보증을 포함한
 어떠한 형태의 보증도 제공하지 않습니다.
@@ -14,20 +11,15 @@ GNU LGPL 2.1판은 이 프로그램과 함께 제공됩니다.
 만약, 이 문서가 누락되어 있다면 자유 소프트웨어 재단으로 문의하시기 바랍니다.
 (자유 소프트웨어 재단 : Free Software Foundation, Inc.,
 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA)
-
 Copyright (C) 2015년 UnHa Kim (unha.kim@kuh.pe.kr)
-
 This file is part of GHTS.
-
 GHTS is free software: you can redistribute it and/or modify
 it under the terms of the GNU Lesser General Public License as published by
 the Free Software Foundation, version 2.1 of the License.
-
 GHTS is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Lesser General Public License for more details.
-
 You should have received a copy of the GNU Lesser General Public License
 along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
@@ -40,11 +32,11 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-var 소켓SUB_NH실시간_정보 mangos.Socket
+var 소켓SUB_NH실시간_정보_BoltDB mangos.Socket
 var 실시간_정보_중계_Go루틴_실행_중 = lib.New안전한_bool(false)
 var nh구독채널_저장소 = lib.New구독채널_저장소()
 
-func go루틴_실시간_정보_중계(ch초기화 chan lib.T신호) {
+func go루틴_실시간_정보_중계_BoltDB(ch초기화 chan lib.T신호) {
 	lib.F메모("모든 정보를 배포하는 대신, 채널별로 구독한 정보만 배포하는 방안을 생각해 볼 것.")
 
 	if 에러 := 실시간_정보_중계_Go루틴_실행_중.S값(true); 에러 != nil {
@@ -96,7 +88,7 @@ func go루틴_실시간_정보_중계(ch초기화 chan lib.T신호) {
 
 // 이미 닫혀 있는 채널에 전송하면 패닉이 발생하는 데,
 // 이 패닉을 적절하게 처리하도록 하기 위해서 해당 부분을 별도의 함수로 분리함.
-func f실시간_정보_중계_도우미(ch수신 chan lib.I소켓_메시지, 소켓_메시지 lib.I소켓_메시지,
+func f실시간_정보_중계_도우미_BoltDB(ch수신 chan lib.I소켓_메시지, 소켓_메시지 lib.I소켓_메시지,
 	nh구독채널_저장소 *lib.S구독채널_저장소, nh대기_중_데이터_저장소 *s대기_중_데이터_저장소) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{
 		M함수with패닉내역: func(r interface{}) {
@@ -120,7 +112,7 @@ var 버킷ID_체결 = []byte(P버킷ID_NH체결)
 var 버킷ID_ETF_NAV = []byte(P버킷ID_NH_ETF_NAV)
 var 버킷ID_업종지수 = []byte(P버킷ID_NH업종지수)
 
-func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 chan lib.I소켓_메시지, db lib.I데이터베이스) {
+func go루틴_실시간_데이터_저장_BoltDB(ch초기화 chan lib.T신호, ch수신 chan lib.I소켓_메시지, db lib.I데이터베이스_Bolt) {
 	if 에러 := nh_ETF_실시간_데이터_수집.S값(true); 에러 != nil {
 		ch초기화 <- lib.P신호_초기화
 		return
@@ -137,7 +129,7 @@ func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 
 	for {
 		select {
 		case 수신_메시지 = <-ch수신:
-			//lib.F체크포인트("데이터 수신")
+		//lib.F체크포인트("데이터 수신")
 			if 수신_메시지.G에러() != nil {
 				lib.F에러_출력(수신_메시지.G에러())
 				continue
@@ -147,7 +139,7 @@ func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 
 		}
 
 		// DB에 수신값 저장
-		if 에러 := fNH_실시간_데이터_저장_도우미(수신_메시지, db); 에러 != nil {
+		if 에러 := fNH_실시간_데이터_저장_도우미_BoltDB(수신_메시지, db); 에러 != nil {
 			if 에러.Error() == bolt.ErrDatabaseNotOpen.Error() &&
 				lib.F테스트_모드_실행_중() {
 				// 테스트 과정에서 DB를 닫은 것이니 종료.
@@ -162,14 +154,14 @@ func go루틴_실시간_데이터_저장(ch초기화 chan lib.T신호, ch수신 
 	}
 }
 
-func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메시지, 데이터베이스 lib.I데이터베이스) (에러 error) {
+func fNH_실시간_데이터_저장_도우미_BoltDB(수신_메시지 lib.I소켓_메시지, 데이터베이스 lib.I데이터베이스_Bolt) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	lib.F조건부_패닉(데이터베이스 == nil, "nil 데이터베이스")
 	lib.F조건부_패닉(수신_메시지 == nil, "nil 메시지")
 	lib.F조건부_패닉(수신_메시지.G길이() != 1, "예상하지 못한 메시지 길이. %v", 수신_메시지.G길이())
 
-	질의 := new(lib.S데이터베이스_질의)
+	질의 := new(lib.S데이터베이스_질의_Bolt)
 
 	switch 수신_메시지.G자료형_문자열(0) {
 	case P버킷ID_NH호가_잔량:
@@ -236,7 +228,7 @@ func fNH_실시간_데이터_저장_도우미(수신_메시지 lib.I소켓_메�
 	return 데이터베이스.S업데이트(질의)
 }
 
-func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []string) (db lib.I데이터베이스, 에러 error) {
+func F실시간_데이터_수집_NH_ETF_BoltDB(파일명 string, 종목코드_모음 []string) (db lib.I데이터베이스_Bolt, 에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{
 		M에러: &에러,
 		M함수with패닉내역: func(r interface{}) {
@@ -248,7 +240,7 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 	F실시간_데이터_구독_NH_ETF(ch수신, 종목코드_모음)
 
 	ch초기화 := make(chan lib.T신호)
-	go go루틴_실시간_정보_중계(ch초기화)
+	go go루틴_실시간_정보_중계_BoltDB(ch초기화)
 	신호 := <-ch초기화
 	lib.F조건부_패닉(신호 != lib.P신호_초기화, "예상하지 못한 신호. %v", 신호)
 
@@ -256,7 +248,7 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 	ch타임아웃 := time.After(lib.P10초)
 	ch공통종료 := lib.F공통_종료_채널()
 
-	go db생성_도우미(파일명, ch결과물)
+	go db생성_도우미_BoltDB(파일명, ch결과물)
 
 	select {
 	case 결과물 := <-ch결과물:
@@ -264,7 +256,7 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 		case error:
 			lib.F패닉(결과값)
 			return nil, 결과값
-		case lib.I데이터베이스:
+		case lib.I데이터베이스_Bolt:
 			db = 결과값
 			break
 		default:
@@ -279,7 +271,7 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 		return
 	}
 
-	go go루틴_실시간_데이터_저장(ch초기화, ch수신, db)
+	go go루틴_실시간_데이터_저장_BoltDB(ch초기화, ch수신, db)
 
 	신호 = <-ch초기화
 
@@ -292,7 +284,7 @@ func F실시간_데이터_수집_NH_ETF(파일명 string, 종목코드_모음 []
 	return db, nil
 }
 
-func db생성_도우미(파일명 string, ch결과물 chan interface{}) {
+func db생성_도우미_BoltDB(파일명 string, ch결과물 chan interface{}) {
 	db, 에러 := lib.NewBoltDB(파일명)
 
 	switch {
@@ -303,7 +295,7 @@ func db생성_도우미(파일명 string, ch결과물 chan interface{}) {
 	}
 }
 
-func F실시간_데이터_구독_NH_ETF(ch수신 chan lib.I소켓_메시지, 종목코드_모음 []string) (에러 error) {
+func F실시간_데이터_구독_NH_ETF_BoltDB(ch수신 chan lib.I소켓_메시지, 종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
@@ -324,7 +316,7 @@ func F실시간_데이터_구독_NH_ETF(ch수신 chan lib.I소켓_메시지, 종
 	return nil
 }
 
-func F실시간_데이터_해지_NH_ETF(종목코드_모음 []string) (에러 error) {
+func F실시간_데이터_해지_NH_ETF_BoltDB(종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_호가_잔량, 종목코드_모음))
