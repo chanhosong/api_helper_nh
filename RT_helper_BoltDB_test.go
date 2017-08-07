@@ -33,6 +33,7 @@ along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
 package api_helper_nh
 
+/*
 import (
 	"github.com/ghts/lib"
 	"testing"
@@ -113,7 +114,15 @@ func TestGo루틴_실시간_데이터_저장_BoltDB(t *testing.T) {
 	db.S종료()
 }
 
-/*
+func f테스트용_실시간_데이터_파일명() string {
+	if lib.F테스트_모드_실행_중() {
+		// 반복된 테스트로 인한 파일명 중복을 피하기 위함.
+		return pBoltDB파일명_테스트 + time.Now().Format("20060102_150405") + ".dat"
+	}
+
+	return pBoltDB파일명 + time.Now().Format(lib.P일자_형식) + ".dat"
+}
+
 func TestF실시간_데이터_수집_NH_ETF_BoltDB(t *testing.T) {
 	var db lib.I데이터베이스_Bolt
 	파일명 := f테스트용_실시간_데이터_파일명()
@@ -166,12 +175,3 @@ func TestF실시간_데이터_수집_NH_ETF_BoltDB(t *testing.T) {
 	}
 }
 */
-
-func f테스트용_실시간_데이터_파일명() string {
-	if lib.F테스트_모드_실행_중() {
-		// 반복된 테스트로 인한 파일명 중복을 피하기 위함.
-		return pBoltDB파일명_테스트 + time.Now().Format("20060102_150405") + ".dat"
-	}
-
-	return pBoltDB파일명 + time.Now().Format(lib.P일자_형식) + ".dat"
-}

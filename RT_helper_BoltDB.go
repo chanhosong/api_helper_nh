@@ -25,6 +25,7 @@ along with GHTS.  If not, see <http://www.gnu.org/licenses/>. */
 
 package api_helper_nh
 
+/*
 import (
 	"github.com/ghts/lib"
 	"time"
@@ -336,3 +337,4 @@ func F실시간_데이터_해지_NH_ETF_BoltDB(종목코드_모음 []string) (�
 
 	return nil
 }
+*/
