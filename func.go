@@ -86,8 +86,6 @@ func F접속_NH() (에러 error) {
 	var 접속됨 bool
 
 	for i:=0 ; i<10 ; i++ {
-		lib.F체크포인트(i)
-
 		if 접속됨, 에러 = F접속됨_NH(); 접속됨 {
 			break
 		}
@@ -95,19 +93,13 @@ func F접속_NH() (에러 error) {
 		lib.F대기(lib.P3초)
 	}
 
-	lib.F체크포인트()
-
 	접속됨, 에러 = F접속됨_NH()
 	lib.F조건부_패닉(!접속됨, "접속 실패")
-
-	lib.F체크포인트()
 
 	if 소켓SUB_NH실시간_정보 == nil {
 		소켓SUB_NH실시간_정보, 에러 = lib.New소켓SUB(lib.P주소_NH_실시간_CBOR)
 		lib.F에러2패닉(에러)
 	}
-
-	lib.F체크포인트()
 
 	return nil
 }

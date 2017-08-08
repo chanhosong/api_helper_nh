@@ -49,9 +49,9 @@ func F조회_NH(질의값 lib.I질의값) (응답_메시지 lib.I소켓_메시�
 func F실시간_정보_구독_NH(ch수신 chan lib.I소켓_메시지, RT코드 string, 종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
-	if !실시간_정보_중계_Go루틴_실행_중.G값() {
+	if !실시간_정보_중계_Go루틴_실행_중_MySQL.G값() {
 		ch초기화 := make(chan lib.T신호, 1)
-		go go루틴_실시간_정보_중계_BoltDB(ch초기화)
+		go Go루틴_실시간_정보_중계_MySQL(ch초기화)
 		<-ch초기화
 	}
 
@@ -60,9 +60,10 @@ func F실시간_정보_구독_NH(ch수신 chan lib.I소켓_메시지, RT코드 s
 	질의값.TR코드 = RT코드
 	질의값.M종목코드_모음 = 종목코드_모음
 
-	nh구독채널_저장소.S추가(ch수신)
+	nh구독채널_저장소_MySQL.S추가(ch수신)
 
 	응답 := lib.New소켓_질의(lib.P주소_NH_TR, lib.CBOR, lib.P30초).S질의(질의값).G응답()
+
 	return 응답.G에러()
 }
 

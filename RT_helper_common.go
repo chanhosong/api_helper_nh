@@ -42,19 +42,20 @@ var 소켓SUB_NH실시간_정보 mangos.Socket
 var 실시간_정보_중계_Go루틴_실행_중_MySQL = lib.New안전한_bool(false)
 var nh구독채널_저장소_MySQL = lib.New구독채널_저장소()
 
-func Go루틴_실시간_정보_중계(ch초기화 chan lib.T신호) {
+func Go루틴_실시간_정보_중계_MySQL(ch초기화 chan lib.T신호) {
 	lib.F메모("모든 정보를 배포하는 대신, 채널별로 구독한 정보만 배포하는 방안을 생각해 볼 것.")
 
-	if 실시간_정보_중계_Go루틴_실행_중.G값() {
-		return
-	}
-
-	if 에러 := 실시간_정보_중계_Go루틴_실행_중.S값(true); 에러 != nil {
+	if 실시간_정보_중계_Go루틴_실행_중_MySQL.G값() {
 		ch초기화 <- lib.P신호_초기화
 		return
 	}
 
-	defer 실시간_정보_중계_Go루틴_실행_중.S값(false)
+	if 에러 := 실시간_정보_중계_Go루틴_실행_중_MySQL.S값(true); 에러 != nil {
+		ch초기화 <- lib.P신호_초기화
+		return
+	}
+
+	defer 실시간_정보_중계_Go루틴_실행_중_MySQL.S값(false)
 
 	소켓SUB_NH실시간_정보, 에러 := lib.New소켓SUB(lib.P주소_NH_실시간_CBOR)
 	lib.F에러2패닉(에러)
@@ -82,8 +83,8 @@ func Go루틴_실시간_정보_중계(ch초기화 chan lib.T신호) {
 			continue
 		}
 
-		for _, ch수신 := range nh구독채널_저장소.G채널_모음() {
-			f실시간_정보_중계_도우미(ch수신, 소켓_메시지, nh구독채널_저장소, nh대기_중_데이터_저장소)
+		for _, ch수신 := range nh구독채널_저장소_MySQL.G채널_모음() {
+			f실시간_정보_중계_도우미(ch수신, 소켓_메시지, nh구독채널_저장소_MySQL, nh대기_중_데이터_저장소)
 		}
 
 		nh대기_중_데이터_저장소.S재전송()

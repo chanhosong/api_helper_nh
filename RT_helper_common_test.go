@@ -51,7 +51,7 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
 
 	ch초기화 := make(chan lib.T신호)
-	go go루틴_실시간_정보_중계_BoltDB(ch초기화)
+	go Go루틴_실시간_정보_중계_MySQL(ch초기화)
 	lib.F테스트_같음(t, <-ch초기화, lib.P신호_초기화)
 
 	ch대기시간_초과 := time.After(lib.P30초)
