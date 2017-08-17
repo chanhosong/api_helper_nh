@@ -53,12 +53,16 @@ func F_NH_API커넥터_실행() (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{ M에러: &에러 })
 
 	if fNH_API커넥터_실행_중() {
+		lib.F문자열_출력("NH API커넥터 이미 실행 중임..\n")
+
 		return nil
 	}
 
 	pid, 에러 := lib.F외부_프로세스_실행(_NH_API커넥터_경로)
 	lib.F조건부_패닉(pid <= 0, "예상하지 못한 PID값. %v", pid)
 	lib.F에러2패닉(에러)
+
+	lib.F문자열_출력("NH API커넥터 실행 성공.\n")
 
 	return nil
 }
@@ -113,15 +117,18 @@ func F접속종료_NH() (에러 error) {
 		return nil
 	}
 
-	// 접속 해재 쿼리 실행
-	lib.F에러2패닉(F접속_NH())
+	// 접속 해제 쿼리 실행
+	질의값 := new(lib.S질의값_단순TR)
+	질의값.TR구분 = lib.TR접속_해제
+
+	lib.New소켓_질의(lib.P주소_NH_TR, lib.CBOR, lib.P30초).S질의(질의값)
 
 	for i:=0 ; i<10 ; i++ {
-		if 접속됨, 에러 = F접속됨_NH(); !접속됨 {
+		lib.F대기(lib.P3초)
+
+		if !fNH_API커넥터_실행_중() {
 			return nil
 		}
-
-		lib.F대기(lib.P3초)
 	}
 
 	return lib.New에러("접속 종료 실패")

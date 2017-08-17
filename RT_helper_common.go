@@ -66,6 +66,7 @@ func Go루틴_실시간_정보_중계_MySQL(ch초기화 chan lib.T신호) {
 
 	for {
 		바이트_모음, 에러 := 소켓SUB_NH실시간_정보.Recv()
+
 		if 에러 != nil {
 			switch 에러.Error() {
 			case "connection closed":
@@ -92,6 +93,7 @@ func Go루틴_실시간_정보_중계_MySQL(ch초기화 chan lib.T신호) {
 		// 종료 조건 확인
 		select {
 		case <-ch종료:
+			lib.F체크포인트("종료")
 			return
 		default:    // 종료 신호 없으면 반복할 것.
 		}
