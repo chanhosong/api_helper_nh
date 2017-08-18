@@ -53,7 +53,7 @@ func F_NH_API커넥터_실행() (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{ M에러: &에러 })
 
 	if fNH_API커넥터_실행_중() {
-		lib.F문자열_출력("NH API커넥터 이미 실행 중임..\n")
+		lib.F문자열_출력("NH API커넥터 이미 실행 중임.")
 
 		return nil
 	}
@@ -62,7 +62,7 @@ func F_NH_API커넥터_실행() (에러 error) {
 	lib.F조건부_패닉(pid <= 0, "예상하지 못한 PID값. %v", pid)
 	lib.F에러2패닉(에러)
 
-	lib.F문자열_출력("NH API커넥터 실행 성공.\n")
+	lib.F문자열_출력("NH API커넥터 실행 성공.")
 
 	return nil
 }
