@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
+/* Copyright (C) 2015-2018 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
 
 이 파일은 GHTS의 일부입니다.
 
@@ -15,7 +15,7 @@ GNU LGPL 2.1판은 이 프로그램과 함께 제공됩니다.
 (자유 소프트웨어 재단 : Free Software Foundation, Inc.,
 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA)
 
-Copyright (C) 2015년 UnHa Kim (unha.kim@kuh.pe.kr)
+Copyright (C) 2015~2017년 UnHa Kim (unha.kim@kuh.pe.kr)
 
 This file is part of GHTS.
 
@@ -47,8 +47,8 @@ func TestGo루틴_실시간_정보_중계(t *testing.T) {
 
 	종목코드_모음 := lib.F종목코드_추출(종목_모음, 100)
 
-	F실시간_데이터_구독_NH_ETF(ch실시간_데이터, 종목코드_모음)
-	defer F실시간_데이터_해지_NH_ETF(종목코드_모음)
+	F실시간_데이터_구독_ETF(ch실시간_데이터, 종목코드_모음)
+	defer F실시간_데이터_해지_ETF(종목코드_모음)
 
 	ch초기화 := make(chan lib.T신호)
 	go Go루틴_실시간_정보_중계_MySQL(ch초기화)

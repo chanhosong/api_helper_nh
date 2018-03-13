@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
+/* Copyright (C) 2015-2018 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
 
 이 파일은 GHTS의 일부입니다.
 
@@ -15,7 +15,7 @@ GNU LGPL 2.1판은 이 프로그램과 함께 제공됩니다.
 (자유 소프트웨어 재단 : Free Software Foundation, Inc.,
 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA)
 
-Copyright (C) 2015년 UnHa Kim (unha.kim@kuh.pe.kr)
+Copyright (C) 2015~2017년 UnHa Kim (unha.kim@kuh.pe.kr)
 
 This file is part of GHTS.
 
@@ -51,10 +51,10 @@ func TestMain(m *testing.M) {
 
 func f테스트_준비() {
 	lib.F테스트_모드_시작()
-	lib.F에러2패닉(F접속_NH())
+	lib.F에러체크(F접속())
 
 	파일_모음, 에러 := ioutil.ReadDir(".")
-	lib.F에러2패닉(에러)
+	lib.F에러체크(에러)
 
 	for _, 파일 := range 파일_모음 {
 		switch {
@@ -68,7 +68,7 @@ func f테스트_준비() {
 
 func f테스트_정리() {
 	lib.New소켓_질의(lib.P주소_NH_TR, lib.CBOR, lib.P10초).S질의(lib.S질의값_단순TR{TR구분:lib.TR종료})
-	lib.F공통_종료_채널_닫은_후_재설정()
-	lib.F에러2패닉(소켓SUB_NH실시간_정보.Close())
+	lib.F공통_종료_채널_닫기()
+	lib.F에러체크(소켓SUB_NH실시간_정보.Close())
 	lib.F테스트_모드_종료()
 }

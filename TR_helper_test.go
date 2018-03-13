@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
+/* Copyright (C) 2015-2018 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
 
 이 파일은 GHTS의 일부입니다.
 
@@ -15,7 +15,7 @@ GNU LGPL 2.1판은 이 프로그램과 함께 제공됩니다.
 (자유 소프트웨어 재단 : Free Software Foundation, Inc.,
 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA)
 
-Copyright (C) 2015년 UnHa Kim (unha.kim@kuh.pe.kr)
+Copyright (C) 2015~2017년 UnHa Kim (unha.kim@kuh.pe.kr)
 
 This file is part of GHTS.
 
@@ -45,7 +45,7 @@ func TestF조회TR_NH(t *testing.T) {
 	질의값.TR코드 = lib.NH_TR_ETF_현재가_조회
 	질의값.M종목코드 = lib.F임의_종목_ETF().G코드()
 
-	응답_메시지 := F조회_NH(질의값)
+	응답_메시지 := F조회(질의값)
 	lib.F테스트_다름(t, 응답_메시지, nil)
 	lib.F테스트_에러없음(t, 응답_메시지.G에러())
 	lib.F테스트_같음(t, 응답_메시지.G길이(), 1)
@@ -65,7 +65,7 @@ func TestTR실시간_서비스_등록_및_해지(t *testing.T) {
 	종목코드_모음 := lib.F종목코드_추출(종목모음, len(종목모음))
 
 	ch수신 := make(chan lib.I소켓_메시지, 10)
-	lib.F테스트_에러없음(t, F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_체결, 종목코드_모음))
+	lib.F테스트_에러없음(t, F실시간_정보_구독(ch수신, lib.NH_RT코스피_체결, 종목코드_모음))
 
 	// 실시간 정보 수신 확인
 	for i := 0; i < 10; i++ {
@@ -81,5 +81,5 @@ func TestTR실시간_서비스_등록_및_해지(t *testing.T) {
 	}
 
 	// 실시간 정보 해지
-	lib.F테스트_에러없음(t, F실시간_정보_해지_NH(lib.NH_RT코스피_체결, 종목코드_모음))
+	lib.F테스트_에러없음(t, F실시간_정보_해지(lib.NH_RT코스피_체결, 종목코드_모음))
 }

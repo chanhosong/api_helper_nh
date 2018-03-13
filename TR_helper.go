@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2016 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
+/* Copyright (C) 2015-2018 김운하(UnHa Kim)  unha.kim@kuh.pe.kr
 
 이 파일은 GHTS의 일부입니다.
 
@@ -15,7 +15,7 @@ GNU LGPL 2.1판은 이 프로그램과 함께 제공됩니다.
 (자유 소프트웨어 재단 : Free Software Foundation, Inc.,
 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA)
 
-Copyright (C) 2015년 UnHa Kim (unha.kim@kuh.pe.kr)
+Copyright (C) 2015~2017년 UnHa Kim (unha.kim@kuh.pe.kr)
 
 This file is part of GHTS.
 
@@ -37,16 +37,16 @@ import (
 	"github.com/ghts/lib"
 )
 
-func F조회_NH(질의값 lib.I질의값) (응답_메시지 lib.I소켓_메시지) {
+func F조회(질의값 lib.I질의값) (응답_메시지 lib.I소켓_메시지) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{
 		M함수with패닉내역: func(r interface{}) {
-			lib.New소켓_메시지_에러(r)
+			응답_메시지, _ = lib.New소켓_메시지_에러(r)
 		}})
 
 	return lib.New소켓_질의(lib.P주소_NH_TR, lib.CBOR, lib.P30초).S질의(질의값).G응답()
 }
 
-func F실시간_정보_구독_NH(ch수신 chan lib.I소켓_메시지, RT코드 string, 종목코드_모음 []string) (에러 error) {
+func F실시간_정보_구독(ch수신 chan lib.I소켓_메시지, RT코드 string, 종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	if !실시간_정보_중계_Go루틴_실행_중_MySQL.G값() {
@@ -67,7 +67,7 @@ func F실시간_정보_구독_NH(ch수신 chan lib.I소켓_메시지, RT코드 s
 	return 응답.G에러()
 }
 
-func F실시간_정보_해지_NH(RT코드 string, 종목코드_모음 []string) (에러 error) {
+func F실시간_정보_해지(RT코드 string, 종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	질의값 := new(lib.S질의값_복수종목)
@@ -81,7 +81,7 @@ func F실시간_정보_해지_NH(RT코드 string, 종목코드_모음 []string) 
 	return 응답.G에러()
 }
 
-func F실시간_정보_일괄_해지_NH() (에러 error) {
+func F실시간_정보_일괄_해지() (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	질의값 := new(lib.S질의값_단순TR)
@@ -91,32 +91,32 @@ func F실시간_정보_일괄_해지_NH() (에러 error) {
 	return 응답.G에러()
 }
 
-func F실시간_데이터_구독_NH_ETF(ch수신 chan lib.I소켓_메시지, 종목코드_모음 []string) (에러 error) {
+func F실시간_데이터_구독_ETF(ch수신 chan lib.I소켓_메시지, 종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
 	lib.F체크포인트("실시간 데이터 구독 시작")
 
-	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_구독(ch수신, lib.NH_RT코스피_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
 	lib.F체크포인트("코스피 호가 잔량 구독")
 
-	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_체결, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_구독(ch수신, lib.NH_RT코스피_체결, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
 	lib.F체크포인트("코스피 호가 체결 구독")
 
-	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_구독(ch수신, lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
 	lib.F체크포인트("코스피 ETF NAV 구독")
 
-	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_구독(ch수신, lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
 	lib.F체크포인트("코스피 시간외 호가 잔량")
 
-	lib.F에러2패닉(F실시간_정보_구독_NH(ch수신, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_구독(ch수신, lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
 	lib.F체크포인트("코스피 예상 호가 잔량")
@@ -124,22 +124,22 @@ func F실시간_데이터_구독_NH_ETF(ch수신 chan lib.I소켓_메시지, 종
 	return nil
 }
 
-func F실시간_데이터_해지_NH_ETF(종목코드_모음 []string) (에러 error) {
+func F실시간_데이터_해지_ETF(종목코드_모음 []string) (에러 error) {
 	defer lib.F에러패닉_처리(lib.S에러패닉_처리{M에러: &에러})
 
-	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_호가_잔량, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_해지(lib.NH_RT코스피_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_체결, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_해지(lib.NH_RT코스피_체결, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_해지(lib.NH_RT코스피_ETF_NAV, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_해지(lib.NH_RT코스피_시간외_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
-	lib.F에러2패닉(F실시간_정보_해지_NH(lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
+	lib.F에러체크(F실시간_정보_해지(lib.NH_RT코스피_예상_호가_잔량, 종목코드_모음))
 	lib.F대기(lib.P500밀리초)
 
 	return nil
